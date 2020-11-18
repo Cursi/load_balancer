@@ -1,6 +1,10 @@
+from datetime import datetime
 import sys
-import json
 import requests
+
+import asyncio
+import aiohttp
+import httpx
 
 EXPECTED_NUMBER_OF_ARGUMENTS = 3
 NUMBER_OF_REQUESTS = None
@@ -48,35 +52,59 @@ def WakeUpHerokuInstances():
         for serverValue in cloudServices[key]:
             currentWakeUpRequestURL = GetComputedURL(region=key, serverValue=serverValue, isSpecificRequest=True)
             
-            if requests.get(url = currentWakeUpRequestURL).status_code != HTTP_OK_STATUS_CODE:
+            response = requests.get(url = currentWakeUpRequestURL) 
+            if response.status_code != HTTP_OK_STATUS_CODE:
                 PrintError(ERROR_HEROKU_INSTANCE_WAKEUP)
                 exit(ERROR_EXIT_CODE)
             else:
-                print(key + " -> " + serverValue + " is UP!")
+                print(response.json())
+                # print(key + " -> " + serverValue + " is UP!")
 
-def ParseJsonResponseTest():
-    testRequest = requests.get(url = GetComputedURL())
-    print(json.loads(testRequest.text))
+max_response_time = 0
+
+async def get(url):
+    global max_response_time
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            responseBody = await response.json()
+            max_response_time = max(max_response_time, responseBody["response_time"])
+            return responseBody
+
+def AsyncIOTest2():
+    print("Testing AsyncIO...AGAIN")
+    loop = asyncio.get_event_loop()
+    # coroutines = [get(BASE_URL + "/work/emea/0") for _ in range(500)]
+    # coroutines = [get(BASE_URL + "/work/asia/0") for _ in range(500)]
+    coroutines = [get(BASE_URL + "/work/us/1") for _ in range(500)]
+    # coroutines = [get(BASE_URL + "/work/emea/0") for _ in range(500)]
+    # coroutines = [get(BASE_URL + "/work/emea/0") for _ in range(500)]
+    results = loop.run_until_complete(asyncio.gather(*coroutines))
+    # for result in results:
+    #     print(result)
+
+    print(max_response_time)
 
 def StartLoadBalancer():
     print("We're good to go with " + str(NUMBER_OF_REQUESTS) + " requests to " + BASE_URL + "\n")
     WakeUpHerokuInstances()
-    ParseJsonResponseTest()
+    # AsyncIOTest2()
 
 if __name__ == "__main__":
     if len(sys.argv) == EXPECTED_NUMBER_OF_ARGUMENTS:
         BASE_URL = sys.argv[2].strip("/")
 
-        try:
-            NUMBER_OF_REQUESTS = int(sys.argv[1])
-            try:
-                if requests.get(url = BASE_URL).status_code == HTTP_OK_STATUS_CODE:
-                    StartLoadBalancer()
-                else:
-                    PrintError(ERROR_HTTP_REQUEST)
-            except:
-                PrintError(ERROR_INVALID_URL)
-        except:
-            PrintError(ERROR_INVALID_NUMBER_OF_REQUESTS)
+        # try:
+        #     NUMBER_OF_REQUESTS = int(sys.argv[1])
+        #     try:
+        if requests.get(url = BASE_URL).status_code == HTTP_OK_STATUS_CODE:
+            start=datetime.now()
+            StartLoadBalancer()
+            print(datetime.now() - start)
+        # else:
+        #     PrintError(ERROR_HTTP_REQUEST)
+        #     except:
+        #         PrintError(ERROR_INVALID_URL)
+        # except:
+        #     PrintError(ERROR_INVALID_NUMBER_OF_REQUESTS)
     else:
         PrintUsage()
