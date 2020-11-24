@@ -19,21 +19,35 @@ README pentru Tema EP
 
 5. What is the latency introduced by the forwarding unit?
 
-    ??????????????????
     I measured that by doing 10 requests to the local hosted forwarding unit, and 10 request to 
     the heroku URL directly, computing the averages and substracting them.
-    Results: 150ms emea,
-    ??????????????????
+    Results: 160ms emea, 200ms us, asia 350ms
+    
+    We can observe that although all services are deployed in Europe, forwarding unit is artificially
+    adding latency to simulate the distance.
 
 6. How many requests must be given in order for the forwarding unit to become the bottleneck of the system? 
    How would you solve this issue?
 
-   ???????????????????
+   This depends a lot on the machine were the forwarding unit will be run and on its inside implementation.
+   Based on the number of operations of the CPU, considering it is an asnyc implementation and the network
+   has a infinite bandwidth we can say that the forwarding unit will become the bottleneck when it will
+   receive that many requests (+1) that the CPU cand handle, so it will queue requests forwardings and it will
+   produce higher latencies than the one artificially added discussed in the question 5.
+   
+   I will solve this issue by using a distributed system, more like a load balancer for proxies,
+   so I when many requests hit at the same time would not be handled by one unique FU.
 
 7. What is your estimation regarding the latency introduced by Heroku?
-
-   ???????????????????
-
+    I computed that by taking from any of the services instances logs the sum of connect time
+    and service time where there was only 1 request to the server.
+    Did that 10 times in a row and averaged, resulted in an around 22ms latency added by Heroku, not bad.
+   
 8. What downsides do you see in the current architecture design?
-
-   ???????????????????
+    The major downside is that all the traffic goes to an unique FU. (More details in question 6).
+    Another downisde can be the usage of Heroku:
+        - cannot handle too many requests at the same time, in terms that it will stack up response time quite easy.
+        - adds a bit of latency described at question 7. 
+        - goes idle in 15min if no requests are made.
+        - maximum response time is 30 seconds which is small if trying to do huge backend processing like ML
+    services for example.
