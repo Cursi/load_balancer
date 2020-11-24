@@ -35,7 +35,7 @@ cloudServicesBaseLatencies = {
 
 # Prints load balances command line usage
 def PrintUsage():
-    print("Usage: python <NUMBER_OF_REQUESTS> <FORWARDING_UNIT_BASE_URL> <POLICY_ID>")
+    print("Usage: python load_balancer.py <NUMBER_OF_REQUESTS> <FORWARDING_UNIT_BASE_URL> <POLICY_ID>")
 
 # Prints the occured error message based on the code given through the execution
 def PrintError(error_code):
@@ -133,7 +133,7 @@ def GetBaseLatencyDistributedCoroutines():
 
     return coroutines
 
-# Sends all the requests to the service with lowest latency, EMEA 0
+# Sending all the requests in a random manner to all 5 services.
 def GetRandomTrafficCoroutines():
     print("Running random traffic policy...")
     computedURL = GetComputedURL()
@@ -141,7 +141,7 @@ def GetRandomTrafficCoroutines():
 
     return [AsyncGET(computedURL) for _ in range(NUMBER_OF_REQUESTS)]
 
-# Sends all the requests to the service with lowest latency, EMEA 0
+# Splitting the requests equally to all 3 regions, but sending them randomly to region servers.
 def GetRegionalRandomTrafficCoroutines():
     print("Running regional random traffic policy...")
     print("Forwarding " + str(NUMBER_OF_REQUESTS) + " requests to all services")
