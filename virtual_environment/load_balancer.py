@@ -35,7 +35,7 @@ cloudServicesBaseLatencies = {
 
 # Prints load balances command line usage
 def PrintUsage():
-    print("Usage: python <NUMBER_OF_REQUESTS> <FORWARDING_UNIT_BASE_URL>")
+    print("Usage: python <NUMBER_OF_REQUESTS> <FORWARDING_UNIT_BASE_URL> <POLICY_ID>")
 
 # Prints the occured error message based on the code given through the execution
 def PrintError(error_code):
